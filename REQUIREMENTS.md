@@ -10,63 +10,82 @@ Design a backend system that manages user accounts with deposit and withdrawal f
 
 ---
 
-## 1. Tech Stack Requirements
+## 1. Tech Stack Requirements ✅
 
 ### Required Information
-- [ ] Programming language choice with justification
-- [ ] Framework selection with justification
-- [ ] Database technology with justification
-- [ ] Hosting platform/infrastructure with justification
-- [ ] Any additional technologies needed
+- [x] Programming language choice with justification
+- [x] Framework selection with justification
+- [x] Database technology with justification
+- [x] Hosting platform/infrastructure with justification
+- [x] Any additional technologies needed
+
+**Decision**: Python + Django + PostgreSQL + Railway
+**Documentation**: See `1-tech-stack/TECH_STACK_SUMMARY.md`
 
 ---
 
-## 2. System Architecture Requirements
+## 2. System Architecture Requirements ✅
 
 ### Architecture Design
-- [ ] Define overall architecture approach (monolith vs microservices)
-- [ ] Provide rationale for architectural choice
-- [ ] Create diagram showing component interactions
-- [ ] Show data flow between components
+- [x] Define overall architecture approach (monolith vs microservices)
+- [x] Provide rationale for architectural choice
+- [x] Create diagram showing component interactions
+- [x] Show data flow between components
 
 ### Authentication & Authorization
-- [ ] Design user authentication mechanism
-- [ ] Design user authorization system
-- [ ] Explain how users are authenticated
-- [ ] Explain how access control is enforced
+- [x] Design user authentication mechanism
+- [x] Design user authorization system
+- [x] Explain how users are authenticated
+- [x] Explain how access control is enforced
+
+**Decision**: Modular Monolith with Event-Driven elements
+**Authentication**: JWT (JSON Web Tokens) with access/refresh tokens
+**Authorization**: Role-Based Access Control (RBAC)
+**Documentation**:
+- `2-system-architecture/SYSTEM_ARCHITECTURE.md` - Architecture options and recommendation
+- `2-system-architecture/ARCHITECTURE_DIAGRAM.md` - High-level component diagram and data flows ⭐
+- `2-system-architecture/COMPONENT_DIAGRAM.md` - Detailed reference (supplementary)
 
 ---
 
-## 3. Database Design Requirements
+## 3. Database Design Requirements ✅
 
 ### Schema Definition
-- [ ] Design `users` table/entity
-- [ ] Design `transactions` table/entity
-- [ ] Design `balances` table/entity
-- [ ] Design any other relevant entities
+- [x] Design `users` table/entity
+- [x] Design `transactions` table/entity
+- [x] Design `balances` table/entity
+- [x] Design any other relevant entities
 
 ### Database Optimization
-- [ ] Define indexes for performance optimization
-- [ ] Define constraints (primary keys, foreign keys, unique, not null, etc.)
-- [ ] Document any special database features used
+- [x] Define indexes for performance optimization
+- [x] Define constraints (primary keys, foreign keys, unique, not null, etc.)
+- [x] Document any special database features used
+
+**Tables Designed**: users, balances, transactions, webhook_logs, sessions
+**Key Features**: SERIALIZABLE isolation, pessimistic locking, partial unique indexes, JSONB
+**Documentation**: `3-database-design/DATABASE_SCHEMA.md`
 
 ---
 
-## 4. Deposit & Withdrawal Flow Requirements
+## 4. Deposit & Withdrawal Flow Requirements ✅
 
 ### Deposit Flow
-- [ ] Document user-facing deposit flow
-- [ ] Document backend deposit processing flow
-- [ ] Explain how deposits are initiated
-- [ ] Explain how Revio webhooks are handled for deposits
-- [ ] Create flowchart or sequence diagram for deposit process
+- [x] Document user-facing deposit flow
+- [x] Document backend deposit processing flow
+- [x] Explain how deposits are initiated
+- [x] Explain how Revio webhooks are handled for deposits
+- [x] Create flowchart or sequence diagram for deposit process
 
 ### Withdrawal Flow
-- [ ] Document user-facing withdrawal flow
-- [ ] Document backend withdrawal processing flow
-- [ ] Explain how withdrawals are initiated
-- [ ] Explain how Revio webhooks are handled for withdrawals
-- [ ] Create flowchart or sequence diagram for withdrawal process
+- [x] Document user-facing withdrawal flow
+- [x] Document backend withdrawal processing flow
+- [x] Explain how withdrawals are initiated
+- [x] Explain how Revio webhooks are handled for withdrawals
+- [x] Create flowchart or sequence diagram for withdrawal process
+
+**Documentation**:
+- `4-deposit-withdrawal-flows/DEPOSIT_FLOW.md` - Complete deposit flow with sequence diagram, webhook handling, idempotency, and failure scenarios
+- `4-deposit-withdrawal-flows/WITHDRAWAL_FLOW.md` - Complete withdrawal flow with sequence diagrams, balance reservation, concurrency safety, and reconciliation
 
 ---
 
