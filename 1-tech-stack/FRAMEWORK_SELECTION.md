@@ -497,32 +497,32 @@ public class TransactionService
 
 ## Final Framework Recommendation
 
-### For Octoco Quiz Backend: **ASP.NET Core 8 with Entity Framework Core**
+### For Octoco Quiz Backend: **Django 5.0 with Django REST Framework**
 
 **Complete Stack:**
-- **Language**: C# 12
-- **Framework**: ASP.NET Core 8.0
-- **ORM**: Entity Framework Core 8.0
+- **Language**: Python 3.11+
+- **Framework**: Django 5.0 + Django REST Framework 3.14
+- **ORM**: Django ORM
 - **Database**: PostgreSQL 16
-- **Authentication**: ASP.NET Core Identity + JWT
-- **Logging**: Serilog with structured logging
-- **Validation**: FluentValidation
-- **Resilience**: Polly for retry/circuit breaker
-- **Background Jobs**: Hangfire
-- **API Documentation**: Swashbuckle (Swagger/OpenAPI)
-- **Testing**: xUnit + Moq + FluentAssertions + Testcontainers
+- **Authentication**: djangorestframework-simplejwt (JWT)
+- **Logging**: structlog with JSON formatting
+- **Validation**: DRF Serializers + django-rest-framework validators
+- **Resilience**: tenacity for retry logic
+- **Background Jobs**: Celery with Redis broker
+- **API Documentation**: drf-spectacular (OpenAPI 3)
+- **Testing**: pytest + pytest-django + factory-boy + faker
 
 **Justification:**
-1. **Financial Safety**: Built-in `decimal` type eliminates floating-point errors
-2. **Transaction Management**: EF Core provides robust transaction handling with isolation levels
-3. **Security**: ASP.NET Core Identity provides secure authentication out of the box
-4. **Performance**: Excellent async/await performance for high concurrency
-5. **Tooling**: Visual Studio/Rider provide outstanding debugging and profiling
-6. **Observability**: Built-in health checks, metrics, and logging integration
-7. **Production Proven**: Used by Stack Overflow, Bing, and many financial services
-8. **Developer Experience**: Modern language features with strong typing
-9. **Deployment**: Cross-platform, containerizes well, good Azure integration
-10. **Scalability**: Proven to scale horizontally and vertically
+1. **Development Velocity**: Django's batteries-included approach accelerates development
+2. **Financial Safety**: Python's `Decimal` class provides precise monetary calculations
+3. **Transaction Management**: Django ORM provides robust transaction handling with `@transaction.atomic` and `select_for_update()`
+4. **Security**: Built-in protections for CSRF, XSS, SQL injection, and clickjacking
+5. **Admin Interface**: Built-in admin panel for operations and monitoring
+6. **Team Expertise**: Existing team has Python experience
+7. **Production Proven**: Powers Instagram, Spotify, Dropbox, Reddit at massive scale
+8. **Cost Efficiency**: Lower hosting costs (~$125/month vs ~$530/month for .NET)
+9. **Ecosystem**: Mature packages for payments, webhooks, background jobs
+10. **Talent Pool**: Larger pool of Python developers at all experience levels
 
 ---
 

@@ -868,16 +868,17 @@ Given that **Financial Transaction Integrity**, **Security**, and **Concurrency*
 
 ## Final Recommendation
 
-**For this specific project (Octoco Quiz backend), I recommend C# with ASP.NET Core** for the following reasons:
+**For this specific project (Octoco Quiz backend), I recommend Python with Django** for the following reasons:
 
-1. **Financial Integrity**: Built-in `decimal` type eliminates entire class of monetary calculation bugs
-2. **Production Ready**: ASP.NET Core is mature, well-documented, and production-proven
-3. **Security**: Excellent built-in security features with active patches
-4. **Developer Experience**: Outstanding IDE support and modern language features
-5. **Scalability Path**: Proven to scale to 100x+ requirements
-6. **Observability**: Great logging, metrics, and monitoring support
-7. **Risk Mitigation**: Strong typing catches errors early, reducing production bugs
+1. **Development Velocity**: Django's "batteries-included" philosophy enables rapid development and iteration
+2. **Team Expertise**: Existing team has Python experience, reducing onboarding time
+3. **Talent Pool**: Larger pool of Python developers available at all experience levels
+4. **Cost Efficiency**: Lower hosting costs (~$125/month vs ~$530/month for .NET on Azure)
+5. **Financial Integrity**: Python's `Decimal` class provides sufficient precision for financial calculations
+6. **Production Ready**: Django powers Instagram, Spotify, Dropbox at massive scale
+7. **Ecosystem**: Mature libraries for payments, webhooks, background jobs (Celery), and financial applications
+8. **Security**: Django has excellent built-in security features (CSRF, XSS, SQL injection protection)
 
-**Second Choice**: Go, if team prefers simplicity and operational ease, or if deployment simplicity is paramount.
+**Second Choice**: C# with ASP.NET Core, if team prioritizes built-in `decimal` type and superior type safety, and budget allows for higher hosting costs.
 
-**Third Choice**: Java with Spring Boot, if existing team expertise or enterprise requirements favor it.
+**Third Choice**: Go, if team prefers simplicity, operational ease, and best-in-class concurrency model.

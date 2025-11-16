@@ -501,7 +501,134 @@ jobs:
 
 ## Recommended Architecture by Stack
 
-### ASP.NET Core + PostgreSQL (Recommended Stack)
+### Python (Django) + PostgreSQL (Recommended Stack)
+
+#### Option A: Railway (Recommended for Simplicity & Cost)
+
+**Infrastructure:**
+- **Compute**: Railway Web Service (Starter/Pro)
+- **Database**: Railway PostgreSQL
+- **Cache**: Railway Redis
+- **Background Jobs**: Railway Worker Service (Celery)
+- **Monitoring**: Railway metrics + Sentry
+- **Secrets**: Railway environment variables
+- **CI/CD**: GitHub integration (automatic deployments)
+
+**Monthly Cost Estimate:**
+- Staging: $15
+- Production: $110-125
+
+**Deployment:**
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login and initialize
+railway login
+railway init
+
+# Link to existing project
+railway link
+
+# Deploy
+railway up
+
+# Or use GitHub integration for automatic deployments on push
+```
+
+**Railway Configuration (railway.json):**
+```json
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "gunicorn octoco.wsgi:application --bind 0.0.0.0:$PORT",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 100,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
+}
+```
+
+---
+
+#### Option B: Render (Great Alternative)
+
+**Infrastructure:**
+- **Compute**: Render Web Service
+- **Database**: Render PostgreSQL
+- **Cache**: Render Redis (or external provider)
+- **Background Jobs**: Render Background Worker (Celery)
+- **Monitoring**: Built-in + Sentry
+- **Secrets**: Environment variables
+- **CI/CD**: GitHub/GitLab integration
+
+**Monthly Cost Estimate:**
+- Staging: $30-50
+- Production: $120-200
+
+**Deployment:**
+```yaml
+# render.yaml
+services:
+  - type: web
+    name: octoco-api
+    env: python
+    region: oregon
+    plan: standard
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate"
+    startCommand: "gunicorn octoco.wsgi:application"
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: DJANGO_SETTINGS_MODULE
+        value: octoco.settings.production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: octoco-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: octoco-redis
+          property: connectionString
+
+  - type: worker
+    name: octoco-celery
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "celery -A octoco worker -l info"
+
+databases:
+  - name: octoco-db
+    plan: standard
+
+  - name: octoco-redis
+    plan: standard
+```
+
+---
+
+#### Option C: DigitalOcean App Platform (Cost-Effective)
+
+**Infrastructure:**
+- **Compute**: App Platform Professional tier
+- **Database**: Managed PostgreSQL
+- **Cache**: Managed Redis
+- **Monitoring**: Built-in + Sentry
+- **CI/CD**: GitHub integration
+
+**Monthly Cost Estimate:**
+- Staging: $40-60
+- Production: $150-250
+
+---
+
+### ASP.NET Core + PostgreSQL (Alternative Stack)
 
 #### Option A: Azure (Best .NET Experience)
 
@@ -657,47 +784,52 @@ databases:
 
 ## Final Hosting Recommendation
 
-### For Octoco Quiz Backend: **Azure App Service + Azure Database for PostgreSQL**
+### For Octoco Quiz Backend: **Railway + Railway PostgreSQL** (or **Render** as alternative)
 
 **Rationale:**
 
-#### 1. Perfect ASP.NET Core Integration
-- Best-in-class .NET hosting
-- Native support for ASP.NET Core 8
-- Easy deployment from Visual Studio or CLI
-- Zero-downtime deployments
+#### 1. Perfect Python/Django Integration
+- Native Python and Django support
+- Automatic dependency detection from requirements.txt
+- Easy deployment via Git push
+- Zero-config database connections
+- Automatic HTTPS/SSL certificates
 
-#### 2. Application Insights (Killer Feature)
-- Deep integration with ASP.NET Core
-- Automatic instrumentation (no code changes)
-- Request tracking, dependency tracking, exception tracking
-- Live metrics dashboard
-- Performance profiling
+#### 2. Developer Experience (Killer Feature)
+- Git-based deployments (push to deploy)
+- Automatic preview environments for PRs
+- Simple environment variable management
+- Built-in database management UI
+- Excellent documentation for Django
+- Fast deployment times
 
-#### 3. Developer Experience
-- Easy local-to-cloud development workflow
-- Visual Studio integration
-- Azure DevOps or GitHub Actions
-- Deployment slots (staging → production swap)
+#### 3. Cost Efficiency
+- Lower monthly costs (~$125 total vs ~$450 for Azure)
+- Transparent, predictable pricing
+- No hidden costs or complex billing
+- Pay for what you use
+- Free tier for development/testing
 
-#### 4. Security & Compliance
-- Azure Active Directory integration
-- Key Vault for secrets
-- Compliance certifications (SOC, PCI-DSS, GDPR)
-- DDoS protection included
+#### 4. Deployment Simplicity
+- No complex configuration required
+- Railway CLI or web dashboard
+- GitHub Actions integration
+- Instant rollbacks
+- Deployment slots (via multiple services)
 
-#### 5. Cost Efficiency
-- Reasonable pricing for the value
-- Free tier available for development
-- Predictable costs
-- Auto-scaling included
+#### 5. Database Features
+- Managed PostgreSQL included
+- Automated backups
+- Connection pooling
+- Easy scaling (vertical and horizontal)
+- Direct database access for debugging
 
-#### 6. Database Features
-- Azure Database for PostgreSQL Flexible Server
-- Automated backups with 35-day retention
-- Point-in-time restore
-- High availability options
-- Read replicas for scaling
+#### 6. Monitoring & Observability
+- Built-in logging and metrics
+- Easy integration with Sentry for error tracking
+- Resource usage dashboards
+- Health check monitoring
+- Webhook notifications for deployments
 
 ---
 
@@ -709,73 +841,64 @@ Services:
   - Docker Desktop (local containers)
   - PostgreSQL 16 (Docker container)
   - Redis (Docker container)
-  - Visual Studio 2022 or JetBrains Rider
+  - VS Code with Python extension or PyCharm
 
 Tools:
-  - Azure Data Studio (database management)
-  - Postman (API testing)
+  - pgAdmin or Azure Data Studio (database management)
+  - Postman or HTTPie (API testing)
   - Git + GitHub
 ```
 
-### Staging Environment (Azure)
+### Staging Environment (Railway)
 ```yaml
 Compute:
-  - App Service: Basic B1 (1 core, 1.75GB RAM) - $13/month
-  - Deployment: Staging slot
+  - Web Service: Starter (0.5GB RAM, 0.5 vCPU) - $5/month
+  - Python runtime detected automatically
+  - Django application with gunicorn
 
 Database:
-  - Azure Database for PostgreSQL Flexible Server
-  - SKU: Burstable B1ms (1 vCore, 2GB RAM) - $40/month
-  - Storage: 32GB
-  - Backups: 7-day retention
+  - Railway PostgreSQL: Starter (1GB storage) - $5/month
+  - Automated backups included
+  - Connection pooling available
 
 Cache:
-  - Azure Cache for Redis: Basic C0 (250MB) - $16/month
-
-Storage:
-  - Azure Blob Storage: LRS (locally redundant) - $2/month
+  - Railway Redis: Starter (256MB) - $5/month
 
 Monitoring:
-  - Application Insights: Free tier (1GB/month)
+  - Railway built-in metrics: Included
   - Sentry: Developer tier - $0 (free)
 
-Total: ~$80-100/month
+Total: ~$15/month
 ```
 
-### Production Environment (Azure)
+### Production Environment (Railway)
 ```yaml
 Compute:
-  - App Service: Standard S1 (1 core, 1.75GB RAM) - $70/month
-  - Auto-scaling: 2-4 instances
-  - Deployment slots: Production + Staging
+  - Web Service: Pro (2GB RAM, 2 vCPU) - $20/month
+  - Auto-scaling: Up to 4 instances
+  - Django with gunicorn + whitenoise for static files
 
 Database:
-  - Azure Database for PostgreSQL Flexible Server
-  - SKU: General Purpose D2s_v3 (2 vCore, 8GB RAM) - $220/month
-  - Storage: 128GB with auto-grow
-  - Backups: 35-day retention
-  - High Availability: Zone-redundant (optional: +100%)
+  - Railway PostgreSQL: Pro (8GB storage) - $20/month
+  - Automated daily backups
+  - Point-in-time recovery available
+  - Connection pooling enabled
 
 Cache:
-  - Azure Cache for Redis: Standard C1 (1GB) - $75/month
+  - Railway Redis: Pro (1GB) - $10/month
 
-Storage:
-  - Azure Blob Storage: GRS (geo-redundant) - $10/month
+Background Jobs:
+  - Celery Worker Service: Pro (2GB RAM) - $20/month
+  - Redis as message broker
 
 Monitoring:
-  - Application Insights: Pay-as-you-go (~$30/month estimated)
+  - Railway built-in metrics: Included
   - Sentry: Team tier - $26/month
 
-Security:
-  - Azure Key Vault: $3/month
-  - Azure Front Door (WAF): $35/month (optional)
+Email:
+  - SendGrid: Essential ($15/month for 40k emails)
 
-Networking:
-  - Virtual Network: Included
-  - Application Gateway: $125/month (if needed)
-
-Total: ~$450-550/month (without HA)
-Total: ~$650-750/month (with HA + WAF)
+Total: ~$110-125/month
 ```
 
 ---
@@ -815,7 +938,7 @@ Total: ~$650-750/month (with HA + WAF)
 ## Additional Technologies Needed
 
 ### 1. Background Job Processing
-**Recommendation**: **Hangfire** (for .NET)
+**Recommendation**: **Celery** with **Redis** broker (for Python/Django)
 
 **Use Cases:**
 - Retry failed Revio API calls
@@ -823,65 +946,114 @@ Total: ~$650-750/month (with HA + WAF)
 - Generate reports
 - Send email notifications
 
-**Why Hangfire:**
-- Native .NET integration
-- Built-in dashboard
-- Persistent storage (uses PostgreSQL)
-- Automatic retries with backoff
+**Why Celery:**
+- Industry standard for Python async tasks
+- Built-in retry logic with exponential backoff
+- Distributed task queue
+- Monitoring via Flower dashboard
+- Excellent Django integration
 
-**Alternative**: Azure Functions for event-driven tasks
+**Implementation:**
+```python
+# Install: celery[redis]
+# Start worker: celery -A octoco worker -l info
+```
+
+**Alternative**: Django-Q for simpler use cases
 
 ---
 
 ### 2. Caching Layer
-**Recommendation**: **Azure Cache for Redis**
+**Recommendation**: **Redis** (via django-redis)
 
 **Use Cases:**
 - Session storage
 - Rate limiting
 - Cache frequently accessed data (user profiles)
 - Distributed locks
+- Celery message broker
 
 **Why Redis:**
 - Fast in-memory storage
 - Pub/sub for real-time updates
 - Distributed locking primitives
-- Well-supported by .NET
+- Excellent Python/Django support
+
+**Implementation:**
+```python
+# Install: django-redis
+# Configure in Django settings
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+    }
+}
+```
 
 ---
 
 ### 3. Email Service
-**Recommendation**: **SendGrid** or **Azure Communication Services**
+**Recommendation**: **SendGrid** (via sendgrid-python SDK)
 
 **Use Cases:**
 - Transaction confirmations
 - Account verification
 - Password resets
 
-**Cost**: $15-20/month (10,000-20,000 emails)
+**Cost**: $15/month (40,000 emails/month)
+
+**Alternative**: AWS SES (cheaper at scale), Mailgun, Postmark
 
 ---
 
 ### 4. API Documentation
-**Recommendation**: **Swashbuckle (Swagger/OpenAPI)**
+**Recommendation**: **drf-spectacular** (OpenAPI 3 for Django REST Framework)
 
 **Why:**
-- Built into ASP.NET Core
-- Auto-generates from code
-- Interactive API explorer
-- Free
+- Auto-generates OpenAPI 3.0 schema from DRF serializers
+- Interactive Swagger UI included
+- ReDoc support
+- Free and open source
+- Better than older drf-yasg
+
+**Implementation:**
+```python
+# Install: drf-spectacular
+# Adds /api/schema/, /api/docs/, /api/redoc/ endpoints
+```
 
 ---
 
 ### 5. Rate Limiting
-**Recommendation**: **AspNetCoreRateLimit** library + Redis
+**Recommendation**: **django-ratelimit** or **Django REST Framework throttling** + Redis
 
 **Use Cases:**
 - Prevent API abuse
 - Protect against DDoS
 - Enforce fair usage
 
-**Implementation**: Middleware in ASP.NET Core
+**Implementation:**
+```python
+# Option 1: DRF built-in throttling
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',
+        'user': '1000/hour'
+    }
+}
+
+# Option 2: django-ratelimit decorator
+from django_ratelimit.decorators import ratelimit
+
+@ratelimit(key='ip', rate='100/h')
+def my_view(request):
+    pass
+```
 
 ---
 
