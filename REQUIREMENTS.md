@@ -89,17 +89,26 @@ Design a backend system that manages user accounts with deposit and withdrawal f
 
 ---
 
-## 5. Webhook Handling Requirements
+## 5. Webhook Handling Requirements ✅
 
 ### Webhook Verification
-- [ ] Design webhook signature verification mechanism
-- [ ] Implement trust validation for incoming webhooks
-- [ ] Protect against spoofed webhooks
+- [x] Design webhook signature verification mechanism
+- [x] Implement trust validation for incoming webhooks
+- [x] Protect against spoofed webhooks
 
 ### Webhook Logging & Auditing
-- [ ] Design webhook delivery log storage
-- [ ] Create audit trail for webhook events
-- [ ] Track webhook processing status
+- [x] Design webhook delivery log storage
+- [x] Create audit trail for webhook events
+- [x] Track webhook processing status
+
+**Key Features**:
+- RSA-SHA256 signature verification with Revio's public key
+- Multi-layer trust validation (signature, timestamp, event ID deduplication, optional IP allowlist)
+- Protection against replay attacks, spoofed webhooks, and MITM attacks
+- Comprehensive audit logging using `webhook_logs` table (from Section 3)
+- Asynchronous processing with retry strategy and dead letter queue
+
+**Documentation**: `5-webhook-handling/WEBHOOK_HANDLING.md`
 
 ---
 
