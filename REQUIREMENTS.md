@@ -112,24 +112,32 @@ Design a backend system that manages user accounts with deposit and withdrawal f
 
 ---
 
-## 6. Security Requirements
+## 6. Security Requirements ✅
 
 ### Authentication & Authorization Security
-- [ ] Implement secure authentication mechanism
-- [ ] Implement role-based or policy-based authorization
-- [ ] Protect user credentials
+- [x] Implement secure authentication mechanism
+- [x] Implement role-based or policy-based authorization
+- [x] Protect user credentials
 
 ### Attack Prevention
-- [ ] Prevent replay attacks on webhooks
-- [ ] Prevent spoofed webhooks
-- [ ] Prevent SQL injection
-- [ ] Prevent privilege escalation
+- [x] Prevent replay attacks on webhooks
+- [x] Prevent spoofed webhooks
+- [x] Prevent SQL injection
+- [x] Prevent privilege escalation
 
 ### Sensitive Data Protection
-- [ ] Secure storage of API keys
-- [ ] Secure storage of authentication tokens
-- [ ] Encrypt sensitive data at rest
-- [ ] Encrypt sensitive data in transit
+- [x] Secure storage of API keys
+- [x] Secure storage of authentication tokens
+- [x] Encrypt sensitive data at rest
+- [x] Encrypt sensitive data in transit
+
+**Key Mechanisms**:
+- **Authentication**: JWT (15-min access + 7-day refresh tokens), bcrypt password hashing
+- **Authorization**: RBAC (user/admin roles), resource ownership validation
+- **Attack Prevention**: Signature verification (webhooks), Django ORM (SQL injection), rate limiting, security headers
+- **Data Protection**: Environment variables (secrets), HTTPS/TLS 1.3, database encryption (AES-256), HTTP-only cookies
+
+**Documentation**: `6-security/SECURITY_DESIGN.md`
 
 ---
 
