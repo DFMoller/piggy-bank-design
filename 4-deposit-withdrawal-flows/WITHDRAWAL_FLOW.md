@@ -30,104 +30,73 @@ sequenceDiagram
     Backend->>Database: SELECT balance FROM users<br/>WHERE id = user_id FOR UPDATE<br/>(pessimistic lock)
     Database-->>Backend: {balance: current_amount}
 
-    alt Sufficient Balance
-        Backend->>Backend: Validate: balance >= amount
-        Backend->>Database: Create transaction record<br/>status: PENDING, type: WITHDRAWAL
-        Database-->>Backend: transaction_id
+    Backend->>Backend: Validate: balance >= amount
+    Backend->>Database: Create transaction record<br/>status: PENDING, type: WITHDRAWAL
+    Database-->>Backend: transaction_id
 
-        Backend->>Database: Update user balance<br/>balance -= amount<br/>(reserve funds immediately)
+    Backend->>Database: Update user balance<br/>balance -= amount<br/>(reserve funds immediately)
 
-        Backend->>Revio: POST /payouts/<br/>{amount, currency, recipient_details,<br/>payout_method, reference}
-        activate Revio
+    Backend->>Revio: POST /payouts/<br/>{amount, currency, recipient_details,<br/>payout_method, reference}
+    activate Revio
+    Revio-->>Backend: {payout_id, status: unprocessed}
+    deactivate Revio
 
-        alt Revio Accepts Payout
-            Revio-->>Backend: {payout_id, status: unprocessed}
-            Backend->>Database: Store payout_id in transaction<br/>status: PROCESSING
-            Backend->>Database: COMMIT TRANSACTION
-            Backend-->>Frontend: {transaction_id, status: PROCESSING}
-            deactivate Backend
-
-            Frontend->>User: Shows "Withdrawal processing" message
-
-            Note over Revio: Revio processes payout<br/>(may take minutes to hours)
-
-            Revio->>Bank: Transfer funds to user's bank
-            activate Bank
-            Bank-->>Revio: Transfer confirmation
-            deactivate Bank
-
-            Revio->>Backend: Webhook: payout.completed<br/>{payout_id, status, amount}
-            activate Backend
-            Backend->>Backend: Verify webhook signature<br/>(RSA-SHA256)
-            Backend->>Database: Check idempotency<br/>(webhook already processed?)
-
-            alt Not yet processed
-                Backend->>Database: Update transaction status: COMPLETED
-                Backend->>Database: Mark webhook as processed
-                Backend->>Database: Log webhook delivery
-                Backend-->>Revio: 200 OK
-            else Already processed
-                Backend-->>Revio: 200 OK (idempotent)
-            end
-            deactivate Backend
-
-            Note over User: User receives notification<br/>(email/push/SMS)
-            User->>Frontend: Checks transaction history
-            Frontend->>Backend: GET /api/transactions/{transaction_id}
-            Backend->>Database: Fetch transaction
-            Database-->>Backend: Transaction data
-            Backend-->>Frontend: {status: COMPLETED, amount}
-            Frontend->>User: Shows completed withdrawal
-
-        else Revio Rejects Payout
-            Revio-->>Backend: Error: {error_code, message}
-            Backend->>Database: Update transaction status: FAILED
-            Backend->>Database: Refund user balance<br/>balance += amount<br/>(return reserved funds)
-            Backend->>Database: COMMIT TRANSACTION
-            Backend-->>Frontend: {error: "Payout failed", details}
-            deactivate Backend
-            Frontend->>User: Shows error message
-        end
-        deactivate Revio
-
-    else Insufficient Balance
-        Backend->>Database: ROLLBACK TRANSACTION
-        Backend-->>Frontend: {error: "Insufficient balance"}
-        deactivate Backend
-        Frontend->>User: Shows insufficient balance error
-    end
-```
-
-## Alternative Flow: Payout Failure After Processing
-
-```mermaid
-sequenceDiagram
-    participant Backend
-    participant Database
-    participant Revio
-    participant Admin
-
-    Note over Revio: Payout fails after being accepted<br/>(bank rejection, invalid account, etc.)
-
-    Revio->>Backend: Webhook: payout.failed<br/>{payout_id, status: failed, error}
-    activate Backend
-    Backend->>Backend: Verify webhook signature
-    Backend->>Database: BEGIN TRANSACTION
-    Backend->>Database: Fetch transaction by payout_id
-    Database-->>Backend: Transaction data
-
-    Backend->>Database: Update transaction status: FAILED
-    Backend->>Database: Refund user balance<br/>balance += amount<br/>(return reserved funds)
-    Backend->>Database: Log failure reason
+    Backend->>Database: Store payout_id in transaction<br/>status: PROCESSING
     Backend->>Database: COMMIT TRANSACTION
-
-    Backend->>Backend: Trigger notification to user
-    Backend->>Admin: Alert: Payout failed for user_id
-    Backend-->>Revio: 200 OK
+    Backend-->>Frontend: {transaction_id, status: PROCESSING}
     deactivate Backend
 
-    Note over Admin: Admin may need to investigate<br/>and help user with correct details
+    Frontend->>User: Shows "Withdrawal processing" message
+
+    Note over Revio: Revio processes payout<br/>(may take minutes to hours)
+
+    Revio->>Bank: Transfer funds to user's bank
+    activate Bank
+    Bank-->>Revio: Transfer confirmation
+    deactivate Bank
+
+    Revio->>Backend: Webhook: payout.completed<br/>{payout_id, status, amount}
+    activate Backend
+    Backend->>Backend: Verify webhook signature<br/>(RSA-SHA256)
+    Backend->>Database: Check idempotency<br/>(webhook already processed?)
+
+    alt Not yet processed
+        Backend->>Database: Update transaction status: COMPLETED
+        Backend->>Database: Mark webhook as processed
+        Backend->>Database: Log webhook delivery
+        Backend-->>Revio: 200 OK
+    else Already processed
+        Backend-->>Revio: 200 OK (idempotent)
+    end
+    deactivate Backend
+
+    Note over User: User receives notification<br/>(email/push/SMS)
+    User->>Frontend: Checks transaction history
+    Frontend->>Backend: GET /api/transactions/{transaction_id}
+    Backend->>Database: Fetch transaction
+    Database-->>Backend: Transaction data
+    Backend-->>Frontend: {status: COMPLETED, amount}
+    Frontend->>User: Shows completed withdrawal
 ```
+
+## Error Handling
+
+### Insufficient Balance
+If the user doesn't have sufficient balance, the transaction is rolled back before calling Revio, and an error is returned immediately.
+
+### Immediate Payout Rejection
+If Revio rejects the payout request (e.g., invalid bank details format, API error), the backend:
+- Refunds the reserved balance
+- Updates transaction status to FAILED
+- Returns error message to user
+
+### Payout Failure After Processing
+If the payout is accepted but fails later during bank transfer (e.g., invalid account number, closed account), Revio sends a `payout.failed` webhook. The backend:
+- Updates transaction status to FAILED
+- Refunds the reserved amount to user balance
+- Notifies user and alerts admin for investigation
+
+**See Section 8 (Failure Handling) for detailed failure scenarios and recovery procedures.**
 
 ## Flow Steps Explained
 
@@ -149,16 +118,15 @@ sequenceDiagram
 - Receives `payout_id` if successful
 
 ### 4. Revio Processes Payout
-- Revio initiates bank transfer
-- Processing time varies (minutes to hours)
+- Revio initiates bank transfer asynchronously
+- Processing time varies (minutes to hours depending on bank)
 - Revio sends funds to user's bank account
 
-### 5. Webhook Processing
-- Revio sends `payout.completed` or `payout.failed` webhook
-- Backend verifies signature
-- Updates transaction status
-- If failed: refunds the reserved amount back to user balance
-- Implements idempotency to handle retries
+### 5. Completion Webhook Processing
+- Revio sends `payout.completed` webhook when transfer succeeds
+- Backend verifies webhook signature (RSA-SHA256)
+- Updates transaction status to COMPLETED
+- Implements idempotency check to handle webhook retries safely
 
 ### 6. User Confirmation
 - User receives notification (email/SMS/push)
@@ -212,31 +180,15 @@ Consider implementing bank account verification before allowing withdrawals:
 - **FAILED**: Payout failed, funds refunded to balance
 - **CANCELLED**: User or admin cancelled (before processing)
 
-### Failure Scenarios
+### Failure Recovery
 
-#### Scenario 1: Revio API Call Fails
-- Balance already deducted
-- Payout creation fails (network error, Revio downtime)
-- **Solution**: Refund balance immediately, mark transaction as FAILED
+If payout fails at any stage, the reserved balance is automatically refunded. For detailed failure scenarios including:
+- API timeouts and Revio downtime
+- Bank rejections and invalid accounts
+- Missing webhooks and reconciliation
+- Concurrent withdrawal attempts
 
-#### Scenario 2: Payout Rejected by Bank
-- Balance already deducted
-- Revio sends `payout.failed` webhook
-- **Solution**: Refund balance via webhook handler
-
-#### Scenario 3: Webhook Never Arrives
-- Payout may be completed but no webhook received
-- **Solution**: Implement polling mechanism:
-  ```
-  Cron Job (every 15 min) -> Check PROCESSING withdrawals older than 1 hour
-  -> Call GET /payouts/{payout_id}
-  -> Update status based on Revio response
-  ```
-
-#### Scenario 4: User Initiates Multiple Concurrent Withdrawals
-- User clicks withdraw button multiple times rapidly
-- **Solution**: Pessimistic locking prevents race condition
-- Only one withdrawal can lock balance at a time
+**See Section 8: Failure Handling & Recovery Design**
 
 ### Compliance & Fraud Prevention
 - Log all withdrawal attempts (successful and failed)
