@@ -218,19 +218,23 @@ Design a backend system that manages user accounts with deposit and withdrawal f
 
 ---
 
-## 9. Bonus Requirements (Optional)
+## 9. Bonus Requirements (Optional) ✅
 
 ### Transaction Dashboard
-- [ ] Design API for transaction history retrieval
-- [ ] Define data structure for transaction history
-- [ ] Explain pagination/filtering strategy
+- [x] Design API for transaction history retrieval
+- [x] Define data structure for transaction history
+- [x] Explain pagination/filtering strategy
 
 ### Scalability
-- [ ] Describe approach to scale to 100x usage
-- [ ] Identify bottlenecks
-- [ ] Propose scaling strategies (horizontal/vertical)
-- [ ] Discuss caching strategies
-- [ ] Discuss database scaling approach
+- [x] Describe approach to scale to 100x usage
+- [x] Identify bottlenecks
+- [x] Propose scaling strategies (horizontal/vertical)
+- [x] Discuss caching strategies
+- [x] Discuss database scaling approach
+
+**Documentation**:
+- `9-bonus/TRANSACTION_DASHBOARD.md` - REST API design with pagination (offset & cursor), filtering, sorting, search, and export functionality
+- `9-bonus/SCALABILITY.md` - 3-phase scaling strategy (1x → 10x → 50x → 100x) with bottleneck analysis and cost projections
 
 ---
 
