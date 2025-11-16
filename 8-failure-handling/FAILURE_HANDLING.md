@@ -53,6 +53,76 @@ flowchart TB
 
 ---
 
+### 2a. Payout Accepted But Fails During Bank Processing
+
+**Scenario**: Revio accepts payout request (returns `payout_id`) but transfer fails later when actually sent to bank
+
+**Root Causes**:
+- Bank account doesn't exist (number is valid format but account closed/non-existent)
+- Beneficiary name doesn't match account holder
+- Bank rejects transfer for compliance/fraud reasons
+- Recipient bank is experiencing technical issues
+- Account cannot receive the currency or amount
+
+**Why This Happens**:
+- Revio can validate *format* of bank details immediately (correct number of digits, valid bank code)
+- But Revio cannot know if account *actually exists* until they attempt the transfer
+- Bank transfers are asynchronous (minutes to hours after payout creation)
+
+**Flow**:
+
+```mermaid
+sequenceDiagram
+    participant Backend
+    participant Database
+    participant Revio
+    participant Bank
+    participant Admin
+
+    Note over Revio: Payout initially accepted<br/>Balance already deducted<br/>Status: PROCESSING
+
+    Revio->>Bank: Attempt to transfer funds
+    Bank-->>Revio: Rejection: Invalid account
+
+    Revio->>Backend: Webhook: payout.failed<br/>{payout_id, status: failed, error_code}
+    activate Backend
+    Backend->>Backend: Verify webhook signature
+    Backend->>Database: BEGIN TRANSACTION
+    Backend->>Database: Fetch transaction by payout_id
+    Database-->>Backend: Transaction data
+
+    Backend->>Database: Update transaction status: FAILED
+    Backend->>Database: Refund user balance<br/>balance += amount<br/>(return reserved funds)
+    Backend->>Database: Log failure reason & error code
+    Backend->>Database: COMMIT TRANSACTION
+
+    Backend->>Backend: Queue notification email to user
+    Backend->>Admin: Alert: Payout failed - user_id, error_code
+    Backend-->>Revio: 200 OK
+    deactivate Backend
+
+    Note over Admin: Admin reviews error<br/>May contact user to verify bank details
+```
+
+**Recovery**:
+- **Automatic**: Webhook handler refunds balance, updates status to FAILED
+- **User Notification**: Email explaining payout failed, funds returned, request to verify bank details
+- **Admin Alert**: Sent to Slack with user ID, transaction ID, and error code for investigation
+- **User Action**: User can retry withdrawal with corrected bank details
+
+**Prevention**:
+- Implement bank account verification flow before allowing withdrawals (micro-deposit confirmation)
+- Store and validate against list of verified bank accounts per user
+- Display clear instructions for correct bank detail format
+- Use Revio's account validation API if available (pre-check before payout creation)
+
+**Monitoring**:
+- Track payout failure rate by error code
+- Alert if failure rate > 10% (indicates systemic issue)
+- Weekly report of common failure reasons
+
+---
+
 ### 3. Network Failures
 
 **Between Client and Backend**:
