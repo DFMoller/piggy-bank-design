@@ -141,40 +141,80 @@ Design a backend system that manages user accounts with deposit and withdrawal f
 
 ---
 
-## 7. Deployment & Hosting Requirements
+## 7. Deployment & Hosting Requirements ✅
 
 ### Infrastructure
-- [ ] Select cloud provider (or hosting solution)
-- [ ] Design containerization strategy (if applicable)
-- [ ] Set up CI/CD pipeline
+- [x] Select cloud provider (or hosting solution)
+- [x] Design containerization strategy (if applicable)
+- [x] Set up CI/CD pipeline
 
 ### Environment Management
-- [ ] Configure staging environment
-- [ ] Configure production environment
-- [ ] Manage environment-specific configuration
+- [x] Configure staging environment
+- [x] Configure production environment
+- [x] Manage environment-specific configuration
 
 ### Observability
-- [ ] Implement logging system
-- [ ] Implement monitoring system
-- [ ] Implement alerting mechanism
-- [ ] Define key metrics to track
+- [x] Implement logging system
+- [x] Implement monitoring system
+- [x] Implement alerting mechanism
+- [x] Define key metrics to track
+
+**Cloud Provider**: Railway (Docker-native PaaS with managed PostgreSQL + Redis)
+
+**Containerization**:
+- Multi-container Docker architecture (web, worker, beat)
+- Docker Compose for local development
+- Dockerfile with Gunicorn + Django
+- Railway deployment with 2 web replicas + 2 worker replicas
+
+**CI/CD**:
+- GitHub Actions (PR checks: lint, test, security scan, Docker build)
+- Auto-deploy to staging on merge to main
+- Manual approval gate for production deployment
+- One-click rollback via Railway
+
+**Environments**: Development (local), Staging (auto-deploy), Production (manual approval)
+
+**Observability**:
+- Structured JSON logging to stdout (Railway logs)
+- Sentry for error tracking + APM
+- Railway metrics for infrastructure monitoring
+- Health check endpoint + alerts (Slack, email)
+- Key metrics: error rate, response time, transaction throughput, resource usage
+
+**Documentation**: `7-deployment-hosting/DEPLOYMENT_DESIGN.md`
 
 ---
 
-## 8. Failure Handling Requirements
+## 8. Failure Handling Requirements ✅
 
 ### Edge Cases & Risks
-- [ ] Handle duplicate transaction scenarios
-- [ ] Handle Revio downtime
-- [ ] Handle network failures
-- [ ] Handle race conditions/concurrency issues
-- [ ] Handle partial failures
+- [x] Handle duplicate transaction scenarios
+- [x] Handle Revio downtime
+- [x] Handle network failures
+- [x] Handle race conditions/concurrency issues
+- [x] Handle partial failures
 
 ### Recovery Mechanisms
-- [ ] Implement retry logic with backoff
-- [ ] Implement dead letter queue for failed operations
-- [ ] Design failure detection system
-- [ ] Design recovery procedures
+- [x] Implement retry logic with backoff
+- [x] Implement dead letter queue for failed operations
+- [x] Design failure detection system
+- [x] Design recovery procedures
+
+**Edge Cases**:
+- Duplicate transactions: Idempotency keys + pessimistic locking
+- Revio downtime: Refund balance, retry with exponential backoff, DLQ after 4 attempts
+- Network failures: Timeouts, connection pooling, health checks
+- Race conditions: SELECT FOR UPDATE, event ID deduplication
+- Partial failures: Two-phase pattern (critical ops succeed, best-effort async)
+
+**Recovery**:
+- Retry logic: 4 attempts (immediate, 1min, 5min, 15min) with exponential backoff
+- Dead letter queue: Manual admin review after max retries
+- Detection: Health checks, error rate monitoring, stuck transaction cron jobs
+- Reconciliation: Every 15 min check for missed webhooks, query Revio API
+
+**Documentation**: `8-failure-handling/FAILURE_HANDLING.md`
 
 ---
 
